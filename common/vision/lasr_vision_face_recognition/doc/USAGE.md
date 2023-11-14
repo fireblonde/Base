@@ -1,0 +1,1 @@
+# QUick and easy way to run the face recognition pipeline
