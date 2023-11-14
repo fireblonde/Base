@@ -1,0 +1,1 @@
+# Te techical documentation of the face recognition module
