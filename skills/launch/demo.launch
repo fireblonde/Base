@@ -1,0 +1,5 @@
+<launch>
+<!--    <node name="identify_people_srv" pkg="lasr_vision_face_recognition" type="identify_people_srv.py" output="screen"></node>-->
+    <node name="yolo_service" pkg="lasr_vision_yolov8" type="service" output="screen"></node>
+
+</launch>

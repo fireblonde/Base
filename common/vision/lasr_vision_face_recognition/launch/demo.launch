@@ -1,0 +1,12 @@
+<launch>
+<!--    <description>Start the LASR RECOGNITION nodes</description>-->
+<!--    <usage doc="LASR Face Recognition"></usage>-->
+<!--    <usage doc="Enable debug topic">debug:=true</usage>-->
+
+    <arg name="debug" default="true" doc="Whether to print while images are taken" />
+    <rosparam command="load" file="$(find lasr_vision_face_recognition)/config/collector.yaml" />
+
+    <node name="dataset_collector" pkg="lasr_vision_face_recognition" type="dataset_collector.py" output="screen">
+        <param name="debug" type="bool" value="$(arg debug)" />
+    </node>
+</launch>

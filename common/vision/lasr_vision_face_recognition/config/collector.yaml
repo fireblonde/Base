@@ -1,0 +1,5 @@
+dataset_collector:
+  image_number: 10
+  sleep_time: 0.5
+  debug: True
+

@@ -1,0 +1,9 @@
+# Image to run inference on
+sensor_msgs/Image img_msg
+
+# People Detection result
+lasr_vision_msgs/Detection[] detected_people
+---
+# People Identification result
+lasr_vision_msgs/Detection[] identified_people
+bool success
