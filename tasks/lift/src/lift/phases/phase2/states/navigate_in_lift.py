@@ -18,7 +18,7 @@ class NavigateInLift(smach.State):
 
     def safe_clusters_info(self, analytics, w, M):
         centers, num_clusters, midpoints, _ = analytics
-        global_centers = w.local_to_global_points(M=M, points=centers, is_lift=False)
+        global_centers = w.local_to_global_points(M=M, points=centers, is_lift=False, colour='r')
         global_centers = np.array(global_centers)
 
         rospy.set_param("/lift/num_clusters", num_clusters)
@@ -43,6 +43,7 @@ class NavigateInLift(smach.State):
             status = self.default.controllers.base_controller.ensure_sync_to_pose(get_pose_from_param('/wait_in_front_lift_centre/pose'))
 
             # get the lift information
+            print("getting lift information")
             warped, analytics, M = w.get_lift_information(is_lift=True, is_sim=True)
 
             self.safe_clusters_info(analytics, w, M)
@@ -65,7 +66,7 @@ class NavigateInLift(smach.State):
             p = s.choose_target_point(occupancy_array)
             rospy.loginfo("The point to go to is {}".format(p))
             # get the global point
-            global_points = w.local_to_global_points(M=M, points=p, is_lift=True)
+            global_points = w.local_to_global_points(M=M, points=p, is_lift=True, colour='g')
 
             # get tiago there
             p = Pose()

@@ -19,6 +19,8 @@ rasa = True
 
 class Default:
     def __init__(self):
+        self.demo_choosing_position = True
+
         rospy.loginfo("YOLO is here")
         self.yolo = rospy.ServiceProxy('/yolov8/detect', YoloDetection)
         rospy.loginfo("PM is here")
@@ -39,14 +41,16 @@ class Default:
         self.tf_base = rospy.ServiceProxy('base_transform', BaseTransform)
         self.tf_latest = rospy.ServiceProxy('latest_transform', LatestTransform)
         self.tf_apply = rospy.ServiceProxy('apply_transform', ApplyTransform)
-        if rasa:
-            rospy.wait_for_service("/lasr_speech/transcribe_and_parse")
-            rospy.loginfo("SPEECH RASA is here")
-            self.speech = rospy.ServiceProxy("/lasr_speech/transcribe_and_parse", Speech)
-        else:
-            pass
-            rospy.loginfo("SPEECH Dialogflow is here")
-            self.speech = rospy.ServiceProxy("/interaction_module", AudioAndTextInteraction)
+
+        if not self.demo_choosing_position:
+            if rasa:
+                rospy.wait_for_service("/lasr_speech/transcribe_and_parse")
+                rospy.loginfo("SPEECH RASA is here")
+                self.speech = rospy.ServiceProxy("/lasr_speech/transcribe_and_parse", Speech)
+            else:
+                pass
+                rospy.loginfo("SPEECH Dialogflow is here")
+                self.speech = rospy.ServiceProxy("/interaction_module", AudioAndTextInteraction)
 
         if not rospy.get_published_topics(namespace='/pal_head_manager'):
             rospy.loginfo("Is SIM ---> True")
@@ -54,4 +58,5 @@ class Default:
         else:
             rospy.loginfo("Is SIM ---> FALSE")
             rospy.set_param("/is_simulation", False)
+
 

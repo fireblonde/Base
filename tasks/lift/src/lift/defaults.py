@@ -17,7 +17,8 @@ PUBLISH_MARKERS = rospy.get_param('publish_markers')
 rospy.loginfo("setting Debug Path ")
 DEBUG_PATH = os.getcwd()
 rospy.loginfo("setting Rasa ")
-RASA = rospy.get_param('rasa')
+RASA = None
+# RASA = rospy.get_param('rasa')
 
 rospy.logwarn("DEBUG: {DEBUG}, DEBUG_WITH_IMAGES: {DEBUG_WITH_IMAGES}, PLOT_SHOW: {PLOT_SHOW}, PLOT_SAVE: {PLOT_SAVE}".format(**locals()))
 

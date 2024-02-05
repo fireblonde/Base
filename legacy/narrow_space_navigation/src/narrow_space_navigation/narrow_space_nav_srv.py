@@ -93,6 +93,7 @@ class NarrowSpaceNavSrv:
 
     def plot_height(self, heights):
         rospy.loginfo("Plotting height map")
+        plt.title('Height Map')
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         x, y = np.meshgrid(np.arange(heights.shape[1]), np.arange(heights.shape[0]))

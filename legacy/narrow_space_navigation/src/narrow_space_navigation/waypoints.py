@@ -164,9 +164,9 @@ class Waypoint:
         w_y_min = max(0, int(y - self.window_size))
         w_y_max = min(msg.info.height, int(y + self.window_size))
         window = np.array(msg.data).reshape(msg.info.height, msg.info.width)[w_y_min:w_y_max, w_x_min:w_x_max]
-        # plt.imshow(window, cmap='gray')
-        # plt.show()
-        # plt.savefig('/home/nicole/robocup/rexy/window' + str(TEST) + '.png', dpi=300, bbox_inches='tight')
+        plt.imshow(window, cmap='gray')
+        plt.show()
+        plt.savefig(DEBUG_PATH + str(TEST) + '.png', dpi=300, bbox_inches='tight')
         return window
 
     @staticmethod
@@ -404,7 +404,7 @@ class Waypoint:
 
         return np.array(midpoints)
 
-    def local_to_global_points(self, M=None, points=None, is_lift=False):
+    def local_to_global_points(self, M=None, points=None, is_lift=False, colour='g'):
         """
         Transforms local points to global points, given the transformation matrix.
 
@@ -445,10 +445,10 @@ class Waypoint:
 
         # Get the x and y coordinates of each transformed point
 
-        # plt.imshow(self.np_grid(self._msg), cmap='gray', aspect='auto')
+        plt.imshow(self.np_grid(self._msg), cmap='gray', aspect='auto')
         for i in range(len(global_points)):
             x, y = global_points[i][0], global_points[i][1]
-            # plt.scatter(x, y, c='r')
+            plt.scatter(x, y, c=colour)
 
         robot_points = []
         x, y = 0, 0
@@ -464,12 +464,12 @@ class Waypoint:
             robot_points.append([x, y])
 
         print("robot points  {}".format(robot_points))
-        # plt.title('local_global' + str(TEST) + '.jpg')
-        #
-        # if PLOT_SHOW:
-        #     plt.show()
-        # if PLOT_SAVE:
-        #     plt.savefig(DEBUG_PATH + "/waypoints" + str(TEST) + ".jpg")
+        plt.title('local_global' + str(TEST) + '.jpg')
+
+        if PLOT_SHOW:
+            plt.show()
+        if PLOT_SAVE:
+            plt.savefig(DEBUG_PATH + "/waypoints" + str(TEST) + ".jpg")
 
         return robot_points
 

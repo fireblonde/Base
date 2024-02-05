@@ -40,20 +40,22 @@ class WaitForPeople(smach.State):
         #         count = 2
         #         self.default.voice.speak("I couldn't hear how many people, so I'm going to guess 2")
 
-        self.default.voice.speak("I will wait a bit here until you go inside. You see, I am a very very good robot!")
-        rospy.sleep(5)
+        # self.default.voice.speak("I will wait a bit here until you go inside. You see, I am a very very good robot!")
+        # rospy.sleep(5)
 
         self.default.voice.speak("I will now move to the center of the lift waiting area")
         state = self.default.controllers.base_controller.ensure_sync_to_pose(get_pose_from_param('/wait_in_front_lift_centre/pose'))
+        print(state)
+        rospy.sleep(1)
 
-        polygon = rospy.get_param('test_lift_points')
-        pcl_msg = rospy.wait_for_message("/xtion/depth_registered/points", PointCloud2)
-        detections, im = perform_detection(self.default, pcl_msg, None, ["person"], "yolov8n-seg.pt")
-        print("len detections")
-        print(len(detections))
-
-
-        self.safe_seg_info(detections)
+        # polygon = rospy.get_param('test_lift_points')
+        # pcl_msg = rospy.wait_for_message("/xtion/depth_registered/points", PointCloud2)
+        # detections, im = perform_detection(self.default, pcl_msg, None, ["person"], "yolov8n-seg.pt")
+        # print("len detections")
+        # print(len(detections))
+        #
+        #
+        # self.safe_seg_info(detections)
 
 
         return 'success'

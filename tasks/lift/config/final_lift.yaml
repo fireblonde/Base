@@ -15,10 +15,10 @@ finish:
     orientation: {x: 0.0, y: 0.0, z: 0.752734065, w: 0.658324712318}
 
 
-#middle:
- # pose:
-  #  position: { x: 6.28203298434, y: 1.45009345075, z: 0.0}
-   # orientation: {x: 0.0, y: 0.0, z: -0.999269840631, w: 0.0382071407751}
+    #middle:
+    # pose:
+    #  position: { x: 6.28203298434, y: 1.45009345075, z: 0.0}
+    # orientation: {x: 0.0, y: 0.0, z: -0.999269840631, w: 0.0382071407751}
 #done
 wait:
   pose:
@@ -119,7 +119,7 @@ test_lift_points:
 
 # mk
 corners_arena:
-   [[ 1.96626102924, -0.987280905247 ],
+  [[ 1.96626102924, -0.987280905247 ],
    [ 7.12160825729, -1.5339679718],
    [ 7.83762931824, 4.70086622238],
    [ 3.28113484383, 5.32565116882]]
@@ -129,21 +129,15 @@ corners_arena:
 #  - [ 0.519, -0.861]
 #  - [ 0.391, -6.01]
 
-#done - might need changing
-phase3_lift:
- pose:
-   position: {   x: 3.31266808156, y: -0.483950084911, z: 0.0}
-   orientation: {x: 0.0, y: 0.0,  z: -0.585323801347, w: 0.810799634668}
-
 
 door_detected_official: True
 
 
 #done - might need changing
 phase2:
- pose:
-   position: { x: 3.09560757362, y: 0.974404310171, z: 0.0}
-   orientation: {x: 0.0, y: 0.0, z: -0.591061635968, w: 0.806626395853}
+  pose:
+    position: { x: 3.09560757362, y: 0.974404310171, z: 0.0}
+    orientation: {x: 0.0, y: 0.0, z: -0.591061635968, w: 0.806626395853}
 
 #done - might need changing
 corners_lift:

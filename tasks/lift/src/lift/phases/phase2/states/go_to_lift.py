@@ -97,7 +97,7 @@ class GoToLift(smach.State):
 
 
         # transform to the global frame
-        global_points = w.local_to_global_points(M=M, points=keypoint, is_lift=True)
+        global_points = w.local_to_global_points(M=M, points=keypoint, is_lift=True, colour="g")
         p = Pose()
         p.position.x = global_points[0][0]
         p.position.y = global_points[0][1]

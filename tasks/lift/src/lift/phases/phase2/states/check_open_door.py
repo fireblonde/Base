@@ -55,7 +55,6 @@ from std_msgs.msg import Bool
 
 class CheckOpenDoor(smach.State):
     def __init__(self, default):
-        # smach.State.__init__(self, outcomes=['success'])
         smach.State.__init__(self, outcomes=['success', 'failed'])
 
         self.default = default
@@ -89,9 +88,9 @@ class CheckOpenDoor(smach.State):
         self.default.controllers.base_controller.rotate_to_face_object(object_name='/door/pose')
 
         # tell a joke
-        self.default.voice.speak("I will tell you a joke in the meantime.")
-        self.default.voice.speak(self.get_joke())
-        rospy.sleep(0.5)
+        # self.default.voice.speak("I will tell you a joke in the meantime.")
+        # self.default.voice.speak(self.get_joke())
+        # rospy.sleep(0.5)
 
         self.default.voice.speak("Now checking the door")
 
