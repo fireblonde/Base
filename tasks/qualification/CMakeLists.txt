@@ -46,11 +46,11 @@ catkin_generate_virtualenv(
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+ add_message_files(
+   FILES
+   KeyValue.msg
+   ObjectPose.msg
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -62,7 +62,7 @@ catkin_generate_virtualenv(
 # Generate actions in the 'action' folder
 add_action_files(
   DIRECTORY action
-  FILES WaitGreet.action Identify.action Greet.action GetName.action LearnFace.action GetCommand.action Guide.action DetectPeople.action FindPerson.action ReceiveObject.action
+  FILES WaitGreet.action Identify.action Greet.action GetName.action LearnFace.action GetCommand.action Guide.action DetectPeople.action FindPerson.action GetObjectPosition.action
 )
 
 # Generate added messages and services with any dependencies listed here

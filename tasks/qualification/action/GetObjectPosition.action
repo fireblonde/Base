@@ -1,0 +1,9 @@
+# goal definition
+string[] known_objects
+
+---
+#result definition
+qualification/ObjectPose[] object_positions
+
+---
+# feedback
