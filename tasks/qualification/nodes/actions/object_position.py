@@ -36,16 +36,16 @@ class ObjectPosition:
 
         self._as.start()
 
-    # def estimate_pose(self, pcl_msg, detection):
-    #     centroid_xyz = seg_to_centroid(pcl_msg, np.array(detection.xyseg))
-    #     centroid = PointStamped()
-    #     centroid.point = Point(*centroid_xyz)
-    #     centroid.header = pcl_msg.header
-    #     tf_req = TfTransformRequest()
-    #     tf_req.target_frame = String("map")
-    #     tf_req.point = centroid
-    #     response = self.tf(tf_req)
-    #     return response.target_point.point
+    def estimate_pose(self, pcl_msg, detection):
+        centroid_xyz = seg_to_centroid(pcl_msg, np.array(detection.xyseg))
+        centroid = PointStamped()
+        centroid.point = Point(*centroid_xyz)
+        centroid.header = pcl_msg.header
+        tf_req = TfTransformRequest()
+        tf_req.target_frame = String("map")
+        tf_req.point = centroid
+        response = self.tf(tf_req)
+        return response.target_point.point
 
     def calculate_relative_position(self, object1, object2):
         # Calculate the center of each bounding box
@@ -91,27 +91,37 @@ class ObjectPosition:
     def determine_direction(self, object1, object2):
         rel_pose = self.calculate_relative_position(object1, object2)
 
+        direction_rl, direction_tb  = '', ''
+        if rel_pose.position.x > 0:
+            direction_rl = 'left'
+        elif rel_pose.position.x < 0:
+            direction_rl = 'right'
+        if rel_pose.position.y > 0:
+            direction_tb = 'top'
+        elif rel_pose.position.y < 0:
+            direction_tb = 'bottom'
 
-        if abs(rel_pose.position.x) > 0 and abs(rel_pose.position.y) > 0:
-            direction = 'top-right'
-        elif abs(rel_pose.position.x) > 0 and abs(rel_pose.position.y) < 0:
-            direction = 'bottom-right'
-        elif abs(rel_pose.position.x) < 0 and abs(rel_pose.position.y) > 0:
-            direction = 'top-left'
-        elif abs(rel_pose.position.x) < 0 and abs(rel_pose.position.y) < 0:
-            direction = 'bottom-left'
-        elif abs(rel_pose.position.x) > 0:
-            direction = 'right'
-        elif abs(rel_pose.position.x) < 0:
-            direction = 'left'
-        elif abs(rel_pose.position.y) > 0:
-            direction = 'top'
-        elif abs(rel_pose.position.y) < 0:
-            direction = 'bottom'
-        else:
-            direction = 'i dunno'
+        return direction_rl, direction_tb
 
-        return direction
+        # if abs(rel_pose.position.x) > 0 and abs(rel_pose.position.y) > 0:
+        #     direction = 'top-right'
+        # elif abs(rel_pose.position.x) > 0 and abs(rel_pose.position.y) < 0:
+        #     direction = 'bottom-right'
+        # elif abs(rel_pose.position.x) < 0 and abs(rel_pose.position.y) > 0:
+        #     direction = 'top-left'
+        # elif abs(rel_pose.position.x) < 0 and abs(rel_pose.position.y) < 0:
+        #     direction = 'bottom-left'
+        # elif abs(rel_pose.position.x) > 0:
+        #     direction = 'right'
+        # elif abs(rel_pose.position.x) < 0:
+        #     direction = 'left'
+        # elif abs(rel_pose.position.y) > 0:
+        #     direction = 'top'
+        # elif abs(rel_pose.position.y) < 0:
+        #     direction = 'bottom'
+        # else:
+        #     direction = 'i dunno'
+
 
     @staticmethod
     def calculate_distance(position1, position2):
@@ -122,12 +132,16 @@ class ObjectPosition:
 
     def execute_cb(self, goal):
         rospy.loginfo(goal)
-        img_msg = rospy.wait_for_message("/usb_cam/image_raw",Image)
+        # pcl_msg = rospy.wait_for_message("/xtion/depth_registered/points", PointCloud2)
+        # cv_im = pcl_msg_to_cv2(pcl_msg)
+        # img_msg = self.bridge.cv2_to_imgmsg(cv_im)
+        img_msg = rospy.wait_for_message("/xtion/rgb/image_raw",Image)
         yolo_res = self.yolo(img_msg, "yolov8n.pt", 0.5, 0.3)
 
         objects_poses = []
         print(yolo_res.detected_objects[0])
         for i, detection in enumerate(yolo_res.detected_objects):
+            print(detection.name + "----------")
             if detection.name in goal.known_objects:
                 unique_object_name = f'{detection.name}_{i}'
                 print(unique_object_name)
@@ -146,34 +160,35 @@ class ObjectPosition:
             for other_object_name, other_object in objects_poses[1:]:
                 if object1_name != other_object_name:
                     if other_object is not None:
-                        direction = self.determine_direction(object1_position, other_object)
+                        direction_rl, direction_tb = self.determine_direction(object1_position, other_object)
 
                         distance = self.calculate_distance(object1_position, other_object)
                         print(f"Distance: {distance}, object1: {object1_name}, other: {other_object_name}")
-                        print(f"Direction: {direction}, object1: {object1_name}, other: {other_object_name}")
+                        print(f"Direction: {direction_rl}, {direction_tb}, object1: {object1_name}, other: {other_object_name}")
 
-                        if direction == 'top':
+                        if direction_tb == 'top':
                             if distance < min_top_distance:
                                 min_top_distance = distance
                                 closest_top = other_object
                             if distance > max_top_distance:
                                 max_top_distance = distance
                                 farthest_top = other_object
-                        elif direction == 'bottom':
+                        elif direction_tb == 'bottom':
                             if distance < min_bottom_distance:
                                 min_bottom_distance = distance
                                 closest_bottom = other_object
                             if distance > max_bottom_distance:
                                 max_bottom_distance = distance
                                 farthest_bottom = other_object
-                        elif direction == 'left':
+
+                        if direction_rl == 'left':
                             if distance < min_left_distance:
                                 min_left_distance = distance
                                 closest_left = other_object
                             if distance > max_left_distance:
                                 max_left_distance = distance
                                 farthest_left = other_object
-                        elif direction == 'right':
+                        elif direction_rl == 'right':
                             if distance < min_right_distance:
                                 min_right_distance = distance
                                 closest_right = other_object
