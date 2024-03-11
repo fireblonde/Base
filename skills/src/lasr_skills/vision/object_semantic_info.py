@@ -8,8 +8,6 @@ from lasr_vision_msgs.srv import YoloDetection
 from typing import List, Union
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Point, Pose, PointStamped
-import tf2_ros
-from tf2_ros import TransformListener, Buffer
 
 
 def calculate_distance(position1, position2):
@@ -42,32 +40,6 @@ def calculate_relative_position(object1, object2):
     rel_pose.position.z = 0
 
     return rel_pose
-
-
-# heaviest/ lightest
-def determine_weight(object1, object2):
-    # look form a yaml file for the object names
-    object_weight = rospy.get_param('object_weight')
-    if object_weight[object1] > object_weight[object2]:
-        weight = 'heavier'
-    elif object_weight[object1] < object_weight[object2]:
-        weight = 'lighter'
-    else:
-        weight = 'equal'
-    return weight
-
-
-# biggest / smallest
-def determine_size(object1, object2):
-    # look form a yaml file for the object names
-    object_size = rospy.get_param('object_size')
-    if object_size[object1] > object_size[object2]:
-        size = 'bigger'
-    elif object_size[object1] < object_size[object2]:
-        size = 'smaller'
-    else:
-        size = 'equal'
-    return size
 
 
 # left of / right of
@@ -112,29 +84,6 @@ class ObjectSemanticInfo(smach.State):
         self.yolo = rospy.ServiceProxy("/yolov8/detect", YoloDetection)
         self.yolo.wait_for_service()
 
-    #     self.objects = {'X': [], 'Y': [], 'Z': []}
-    #     self.tf_buffer = Buffer()
-    #     self.tf_listener = TransformListener(self.tf_buffer)
-    #
-    # def insert_object(self, bbox, frame_id):
-    #     object_point = get_center_bbox(bbox)
-    #     try:
-    #         transform = self.tf_buffer.lookup_transform('map', frame_id, rospy.Time())
-    #         transformed_point = self.tf_buffer.transform(object_point, 'map', timeout=rospy.Duration(1.0))
-    #     except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as ex:
-    #         rospy.logerr("Transform error: {}".format(ex))
-    #         return
-    #
-    #     self.objects['X'].append((transformed_point.point.x, object_point))
-    #     self.objects['Y'].append((transformed_point.point.y, object_point))
-    #     self.objects['Z'].append((transformed_point.point.z, object_point))
-    #
-    #     self.objects['X'].sort(key=lambda x: x[0])
-    #     self.objects['Y'].sort(key=lambda x: x[0])
-    #     self.objects['Z'].sort(key=lambda x: x[0])
-    #
-    # def get_objects(self):
-    #     return self.objects
 
     def execute(self, userdata):
         img_msg = rospy.wait_for_message(self.image_topic, Image)
