@@ -3,6 +3,8 @@ import numpy as np
 
 from PIL import Image
 from sensor_msgs.msg import Image as SensorImage
+from geometry_msgs.msg import Point
+import math
 
 
 def cv2_img_to_msg(img, stamp=None):
@@ -102,3 +104,39 @@ def extract_mask_region(frame, mask, expand_x=0.5, expand_y=0.5):
         face_region = frame[y:y+int(new_h), x:x+int(new_w)]
         return face_region
     return None
+
+def get_center_bbox(xywh) -> Point:
+    """
+    Get the center of the bounding box
+    Parameters
+    ----------
+    xywh
+
+    Returns
+    -------
+
+    """
+    x, y, w, h = xywh
+    p = Point()
+    p.x = x + w / 2
+    p.y = y + h / 2
+    p.z = 0  # assuming same plane
+    return p
+
+
+def calculate_distance(position1, position2) -> float:
+    """
+    Calculate the Euclidian distance between two positions
+    Parameters
+    ----------
+    position1
+    position2
+
+    Returns
+    -------
+
+    """
+    dx = position2.x - position1.x
+    dy = position2.y - position1.y
+    dz = position2.z - position1.z
+    return math.sqrt(dx ** 2 + dy ** 2 + dz ** 2)
