@@ -1,49 +1,38 @@
 #!/usr/bin/env python3
 
 import os
-import math
 import smach
 import rospy
 from lasr_vision_msgs.srv import YoloDetection
 from typing import List, Union
 from sensor_msgs.msg import Image
-from geometry_msgs.msg import Point, Pose, PointStamped
+from geometry_msgs.msg import Pose
+from typing import Tuple
+from common.helpers.cv2_img import get_center_bbox, calculate_distance
 
 
-def calculate_distance(position1, position2):
-    dx = position2.x - position1.x
-    dy = position2.y - position1.y
-    dz = position2.z - position1.z
-    return math.sqrt(dx ** 2 + dy ** 2 + dz ** 2)
+def calculate_relative_position(object1, object2) -> Pose:
+    # center1_x = object1.x + object1.x / 2
+    # center1_y = object1.y + object1.y / 2
+    # center2_x = object2.x + object2.x / 2
+    # center2_y = object2.y + object2.y / 2
+    #
+    # # Calculate the relative position
+    # rel_pose = Pose()
+    # rel_pose.position.x = center2_x - center1_x
+    # rel_pose.position.y = center2_y - center1_y
+    # rel_pose.position.z = 0  # assuming same plane
 
-
-def get_center_bbox(xywh):
-    x, y, w, h = xywh
-    p = Point()
-    p.x = x + w / 2
-    p.y = y + h / 2
-    p.z = 0  # assuming same plane
-    return p
-
-
-def calculate_relative_position(object1, object2):
-    center1_x = object1.x + object1.x / 2
-    center1_y = object1.y + object1.y / 2
-    center2_x = object2.x + object2.x / 2
-    center2_y = object2.y + object2.y / 2
-
-    # Calculate the relative position
     rel_pose = Pose()
-    rel_pose.position.x = center2_x - center1_x
-    rel_pose.position.y = center2_y - center1_y
-    # Assuming objects are on the same plane, so the relative z position is 0
-    rel_pose.position.z = 0
+    rel_pose.position.x = object2.x - object1.x
+    rel_pose.position.y = object2.y - object1.y
+    rel_pose.position.z = object2.z - object1.z
 
     return rel_pose
 
 
 # left of / right of
-def determine_direction(object1, object2):
+def determine_direction(object1, object2) -> Tuple[str, str]:
     rel_pose = calculate_relative_position(object1, object2)
 
     direction_rl, direction_tb = '', ''
@@ -84,7 +73,6 @@ class ObjectSemanticInfo(smach.State):
         self.yolo = rospy.ServiceProxy("/yolov8/detect", YoloDetection)
         self.yolo.wait_for_service()
 
-
     def execute(self, userdata):
         img_msg = rospy.wait_for_message(self.image_topic, Image)
         try:
@@ -96,8 +84,8 @@ class ObjectSemanticInfo(smach.State):
                 if detection.name in self.known_objects:
                     # unique_object_name = f'{detection.name}_{i}'
                     # print(unique_object_name)
-                    objects_poses.append((detection.name, get_center_bbox(detection.xywh)))
                     # objects_poses.append((unique_object_name, get_center_bbox(detection.xywh)))
+                    objects_poses.append((detection.name, get_center_bbox(detection.xywh)))
 
             # get the object semantic info
             object_semantic_info = {}
@@ -132,7 +120,9 @@ class ObjectSemanticInfo(smach.State):
 
 class QueryObjectSemanticInfo(smach.State):
     """
-    State for querying the object semantic info
+    State for querying the object semantic info:
+
+    Answer the question: Object is right/left of what object?
     """
 
     def __init__(self):
@@ -147,19 +137,12 @@ class QueryObjectSemanticInfo(smach.State):
         object_semantic_info = userdata.object_semantic_info
         object1 = userdata.object1
         direction = userdata.direction
-        # Userdata example
-            # - object_semantic_info
-            #  - cup_0
-            #   - bottle_1
-            #    - direction: top-right
-            #    - distance: 1.5
 
         userdata.object = 'no object'
         if object1 in object_semantic_info:
             for other_object, info in object_semantic_info[object1].items():
                 if info['direction_rl'] == direction or info['direction_tb'] == direction:
-                    print(f'{object1} is {direction} of {other_object}')
-                    print(f"output userdata {other_object}")
+                    rospy.loginfo(f"output userdata {other_object}")
                     userdata.object = other_object
                     return 'succeeded'
         return 'failed'
@@ -168,24 +151,18 @@ class QueryObjectSemanticInfo(smach.State):
 if __name__ == '__main__':
     rospy.init_node('object_semantic_info')
 
-    sm = smach.StateMachine(outcomes=['succeeded', 'failed'], input_keys=['object1', 'direction'], output_keys=['object'])
+    sm = smach.StateMachine(outcomes=['succeeded', 'failed'], input_keys=['object1', 'direction'],
+                            output_keys=['object'])
     sm.userdata.object1 = 'cup'
     sm.userdata.direction = 'left'
-    # with sm:
-    #     smach.StateMachine.add('GET_OBJECT_SEMANTIC_INFO', ObjectSemanticInfo(),
-    #                            transitions={'succeeded': 'succeeded', 'failed': 'failed'})
-    # outcome = sm.execute()
-    # print(outcome)
-    # print(sm.userdata.object_semantic_info)
-    # rospy.spin()
-    # add the query state with object cup and left
-
     with sm:
         smach.StateMachine.add('GET_OBJECT_SEMANTIC_INFO', ObjectSemanticInfo(),
-                               transitions={'succeeded': 'QUERY_OBJECT_SEMANTIC_INFO', 'failed': 'failed'}, remapping={'object_semantic_info': 'object_semantic_info'})
+                               transitions={'succeeded': 'QUERY_OBJECT_SEMANTIC_INFO', 'failed': 'failed'},
+                               remapping={'object_semantic_info': 'object_semantic_info'})
         smach.StateMachine.add('QUERY_OBJECT_SEMANTIC_INFO', QueryObjectSemanticInfo(),
                                transitions={'succeeded': 'succeeded', 'failed': 'failed'},
-                                 remapping={'object_semantic_info': 'object_semantic_info', 'object1': 'object1', 'direction': 'direction', 'object': 'object'}
+                               remapping={'object_semantic_info': 'object_semantic_info', 'object1': 'object1',
+                                          'direction': 'direction', 'object': 'object'}
                                )
     outcome = sm.execute()
     print(sm.userdata.object)
