@@ -19,7 +19,7 @@ def calculate_distance(position1, position2):
 
 def get_center_bbox(xywh):
     x, y, w, h = xywh
-    p = PointStamped()
+    p = Point()
     p.x = x + w / 2
     p.y = y + h / 2
     p.z = 0  # assuming same plane
@@ -66,7 +66,7 @@ class ObjectSemanticInfo(smach.State):
 
     def __init__(
             self,
-            known_objects: Union[List[str], None] = ['cup', 'bottle', 'banana'],
+            known_objects: Union[List[str], None] = ['cup', 'bottle', 'mouse', 'cell phone'],
             image_topic: str = "/xtion/rgb/image_raw",
             confidence: float = 0.5,
             nms: float = 0.3,
@@ -94,9 +94,10 @@ class ObjectSemanticInfo(smach.State):
             objects_poses = []
             for i, detection in enumerate(result.detected_objects):
                 if detection.name in self.known_objects:
-                    unique_object_name = f'{detection.name}_{i}'
-                    print(unique_object_name)
-                    objects_poses.append((unique_object_name, get_center_bbox(detection.xywh)))
+                    # unique_object_name = f'{detection.name}_{i}'
+                    # print(unique_object_name)
+                    objects_poses.append((detection.name, get_center_bbox(detection.xywh)))
+                    # objects_poses.append((unique_object_name, get_center_bbox(detection.xywh)))
 
             # get the object semantic info
             object_semantic_info = {}
@@ -129,13 +130,65 @@ class ObjectSemanticInfo(smach.State):
             return 'failed'
 
 
+class QueryObjectSemanticInfo(smach.State):
+    """
+    State for querying the object semantic info
+    """
+
+    def __init__(self):
+        smach.State.__init__(
+            self,
+            input_keys=['object_semantic_info', 'object1', 'direction'],
+            outcomes=['succeeded', 'failed'],
+            output_keys=['object'],
+        )
+
+    def execute(self, userdata):
+        object_semantic_info = userdata.object_semantic_info
+        object1 = userdata.object1
+        direction = userdata.direction
+        # Userdata example
+            # - object_semantic_info
+            #  - cup_0
+            #   - bottle_1
+            #    - direction: top-right
+            #    - distance: 1.5
+
+        userdata.object = 'no object'
+        if object1 in object_semantic_info:
+            for other_object, info in object_semantic_info[object1].items():
+                if info['direction_rl'] == direction or info['direction_tb'] == direction:
+                    print(f'{object1} is {direction} of {other_object}')
+                    print(f"output userdata {other_object}")
+                    userdata.object = other_object
+                    return 'succeeded'
+        return 'failed'
+
+
 if __name__ == '__main__':
     rospy.init_node('object_semantic_info')
-    sm = smach.StateMachine(outcomes=['succeeded', 'failed'])
+
+    sm = smach.StateMachine(outcomes=['succeeded', 'failed'], input_keys=['object1', 'direction'], output_keys=['object'])
+    sm.userdata.object1 = 'cup'
+    sm.userdata.direction = 'left'
+    # with sm:
+    #     smach.StateMachine.add('GET_OBJECT_SEMANTIC_INFO', ObjectSemanticInfo(),
+    #                            transitions={'succeeded': 'succeeded', 'failed': 'failed'})
+    # outcome = sm.execute()
+    # print(outcome)
+    # print(sm.userdata.object_semantic_info)
+    # rospy.spin()
+    # add the query state with object cup and left
+
     with sm:
         smach.StateMachine.add('GET_OBJECT_SEMANTIC_INFO', ObjectSemanticInfo(),
-                               transitions={'succeeded': 'succeeded', 'failed': 'failed'})
+                               transitions={'succeeded': 'QUERY_OBJECT_SEMANTIC_INFO', 'failed': 'failed'}, remapping={'object_semantic_info': 'object_semantic_info'})
+        smach.StateMachine.add('QUERY_OBJECT_SEMANTIC_INFO', QueryObjectSemanticInfo(),
+                               transitions={'succeeded': 'succeeded', 'failed': 'failed'},
+                                 remapping={'object_semantic_info': 'object_semantic_info', 'object1': 'object1', 'direction': 'direction', 'object': 'object'}
+                               )
     outcome = sm.execute()
-    print(outcome)
+    print(sm.userdata.object)
     print(sm.userdata.object_semantic_info)
+    print(outcome)
     rospy.spin()
